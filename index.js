@@ -1,7 +1,6 @@
 const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const fs = require('fs-extra');
-const qrcode = require('qrcode-terminal'); 
 const express = require('express'); 
 
 // --- 🌐 تشغيل سيرفر الويب المُنقذ لـ Render لمنع الـ Timeout ---
@@ -47,13 +46,13 @@ const bigBank = [
     "تانجيرو", "نيزوكو", "زينيتسو", "إينوسكي", "رينغوكو", "توميوكا", "شينوبو", "ميتسوري", "أوباناي", "سانيمي", "غيومي", "مويتيرو", "يوريتشي", "موزان", "أكازا", "دوما", "كوكوشيبو"
 ];
 
-// --- 🎯 بنك الأسئلة ومقولات الأنمي الضخم (أكثر من 40 سؤال) 🎯 ---
+// --- 🎯 بنك الأسئلة ومقولات الأنمي الضخم 🎯 ---
 const animeQuizzes = [
     { q: "من هو مبرمج يوكي وصاحب الهيبة؟", a: "ليفاي" },
     { q: "ما هو حلم لوفي الأساسي؟", a: "ملك القراصنة" },
     { q: "من هو وميض كونوها الأصفر؟", a: "ميناتو" },
     { q: "من قتل عائلة وعشيرة إيتاتشي؟", a: "إيتاتشي" },
-    { q: "ما اسم سيف ميهوك الأسطوري الأسود? ", a: "يورو" },
+    { q: "ما اسم سيف ميهوك الأسطوري الأسود؟", a: "يورو" },
     { q: "من هو ملك اللعنات في جوجوتسو؟", a: "سوكونا" },
     { q: "من هو أقوى سياف في العالم في ون بيس؟", a: "ميهوك" },
     { q: "ما اسم فاكهة الشيطان الخاصة بـ لاو؟", a: "العمليات" },
@@ -74,7 +73,7 @@ const animeQuizzes = [
     { q: "من هو الشيطان الكيوت الذي يسكن داخل سيف أستا؟", a: "ليبي" },
     { q: "ما اسم السيف الذي يمتلكه تانجيرو الأسود؟", a: "نيشيرين" },
     { q: "من صاحب مقولة: العالم ليس مثالياً، لكنه موجود من أجلنا؟", a: "إدوارد" },
-    { q: "ما اسم الجزيرة الأخيرة في ون بيس التي تخبئ الون بيس؟", a: "لاف تيل" },
+    { q: "ما اسم الجزيرة الأخيرة في ون بيس التي تخبئ الون بيس? ", a: "لاف تيل" },
     { q: "من هو الهاشيرا اللهب الذي ضحى بحياته في القطار؟", a: "رينغوكو" },
     { q: "من هو الهوكاجي الخامس والطبية الأسطورية لقرية كونوها؟", a: "تسونادي" },
     { q: "ما اسم عيون ساسكي الأسطورية الأبدية؟", a: "الرينغان" },
@@ -84,7 +83,7 @@ const animeQuizzes = [
     { q: "ما هو اسم عّم بوروتو وصديق ومنافس ناروتو؟", a: "ساسكي" },
     { q: "من هو الشخص الأسطوري الذي درب لوفي على الهاكي؟", a: "رالي" },
     { q: "من صاحب مقولة: أنا الرجل الذي سيصبح ملك القراصنة؟", a: "لوفي" },
-    { q: "ما هي القرية المخفية التي ينتمي إليها ناروتو? ", a: "كونوها" },
+    { q: "ما هي القرية المخفية التي ينتمي إليها ناروتو؟", a: "كونوها" },
     { q: "من هي مؤسسة الجدار والعملاق الأول في هجوم العمالقة؟", a: "يمير" },
     { q: "من هو مستخدم عيون اللانهاية القاتلة في جوجوتسو؟", a: "قوجو" },
     { q: "ما اسم شقيقة تانجيرو الكيوت التي أصبحت شيطانة؟", a: "نيزوكو" },
@@ -104,29 +103,42 @@ const shopItems = [
 ];
 
 async function startBot() {
-    if (fs.existsSync('./session_yuki/creds.json')) {
-        try {
-            const creds = fs.readJsonSync('./session_yuki/creds.json');
-            if (!creds.me) { 
-                console.log('🗑️ [يوكي] تم اكتشاف كاش معطل، جاري حذفه...');
-                fs.removeSync('./session_yuki');
-            }
-        } catch(e) { fs.removeSync('./session_yuki'); }
+    // حذف الكاش القديم لضمان تفعيل كود الربط الجديد
+    if (fs.existsSync('./session_yuki')) {
+        fs.removeSync('./session_yuki');
     }
 
     const { state, saveCreds } = await useMultiFileAuthState('session_yuki');
-    const sock = makeWASocket({ auth: state, logger: pino({ level: 'silent' }), printQRInTerminal: false });
+    const sock = makeWASocket({ 
+        auth: state, 
+        logger: pino({ level: 'silent' }),
+        printQRInTerminal: false // إلغاء طباعة الـ QR لتنظيف الـ Logs
+    });
+    
+    saveCreds();
+
+    // 🌟 تفعيل الربط بالكود بدلاً من الـ QR 🌟
+    // ضع رقم البوت هنا (مع كود الدولة وبدون أصفار أو +)
+    let phoneNumber = "249992574007"; 
+
+    if (phoneNumber && !sock.authState.creds.registered) {
+        setTimeout(async () => {
+            try {
+                let code = await sock.requestPairingCode(phoneNumber);
+                code = code?.match(/.{1,4}/g)?.join("-") || code;
+                console.log('\n==================================================');
+                console.log(`🌸 كود ربط يوكي بالواتساب الخاص بك هو ➜  ${code}  🌸`);
+                console.log('==================================================\n');
+            } catch (err) {
+                console.log("❌ فشل توليد كود الربط: ", err);
+            }
+        }, 3000);
+    }
+
     sock.ev.on('creds.update', saveCreds);
 
     sock.ev.on('connection.update', (update) => {
-        const { connection, lastDisconnect, qr } = update;
-        if (qr) {
-            console.log('\n==================================================');
-            console.log('🌸 امسح الـ QR كود العريض التالي لتفعيل يوكي 🌸');
-            console.log('==================================================\n');
-            qrcode.generate(qr, { small: false }); 
-            console.log('\n==================================================\n');
-        }
+        const { connection, lastDisconnect } = update;
         if (connection === 'close') {
             const shouldReconnect = (lastDisconnect.error)?.output?.statusCode !== DisconnectReason.loggedOut;
             if (shouldReconnect) startBot();
@@ -299,9 +311,9 @@ async function startBot() {
                 let c1 = choises[Math.floor(Math.random() * choises.length)];
                 let c2 = choises[Math.floor(Math.random() * choises.length)];
                 while(c1 === c2) { c2 = choises[Math.floor(Math.random() * choises.length)]; }
-                await sock.sendMessage(from, { text: `🎲 *لو خيروك الكيوت من يوكي:* \n\n🔴 الاختيار الأول: ${c1}\n🔵 الاختيار الثاني: ${c2}\n\nوش تختار؟ ورونا صدماتكم هههههه` }); break;
+                await sock.sendMessage(from, { text: `🎲 *لو خيروك الكيوت من يوكي:* \n\n🔴 الاختيار الأول: ${c1}\n🔵 الاختيار الثاني: ${c2}\n\nوش تختار? ورونا صدماتكم هههههه` }); break;
             case 'كت تويت':
-                const tweets = ["وش أكثر أنمي تندمت إنك تابعته؟ 🧐", "لو عاد بك الزمن، بتدخل نفس هذا القروب? 😂", "من هو أقرب شخص لك في هذا الفيلق؟ 💕", "اعتراف خطير ما قلته لأحد بالجروب قبل كذا؟ 🤫"];
+                const tweets = ["وش أكثر أنمي تندمت إنك تابعته؟ 🧐", "لو عاد بك الزمن، بتدخل نفس هذا القروب؟ 😂", "من هو أقرب شخص لك في هذا الفيلق؟ 💕", "اعتراف خطير ما قلته لأحد بالجروب قبل كذا؟ 🤫"];
                 let tweet = tweets[Math.floor(Math.random() * tweets.length)];
                 await sock.sendMessage(from, { text: `💭 *كت تويت حماسي من يوكي:* \n\n💬 ${tweet}` }); break;
             case 'ليفاي': await sock.sendMessage(from, { text: `⚔️ *القائد ليفاي* هو سيدي الأسطوري الغالي وتاج راسي.. هيبته تملى المكان ويوكي تفتخر بخدمته وتنفذ كل كلامه بسعادة! 💖🌸` }); break;

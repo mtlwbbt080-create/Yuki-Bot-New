@@ -2,15 +2,18 @@ const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = requi
 const pino = require('pino');
 const fs = require('fs-extra');
 const qrcode = require('qrcode-terminal'); 
-const http = require('http'); // مكتبة لفتح سيرفر وهمي عشان رندر ما يقفل البوت
+const express = require('express'); // الاعتماد على إكسبريس رسمياً لحل مشكلة رندر تماماً
 
-// --- 🛠️ خدعة سيرفر الويب لـ Render ---
+// --- 🌐 تشغيل سيرفر الويب الحقيقي والآمن لـ Render ---
+const app = express();
 const port = process.env.PORT || 3000;
-http.createServer((req, res) => {
-    res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
-    res.end('عالم يوكي السحري ! ✨🌸');
-}).listen(port, () => {
-    console.log(`✅ تم فتح المنفذ الوهمي بنجاح على سيرفر رندر: ${port}`);
+
+app.get('/', (req, res) => {
+    res.send('🌸 عالم يوكي السحري يعمل بنجاح وبدون توقف! ✨');
+});
+
+app.listen(port, () => {
+    console.log(`✅ [Render] تم فتح المنفذ والموقع الوهمي بنجاح على الـ Port: ${port}`);
 });
 
 // --- إعدادات القاعدة ---
@@ -44,7 +47,7 @@ const bigBank = [
     "تانجيرو", "نيزوكو", "زينيتسو", "إينوسكي", "رينغوكو", "توميوكا", "شينوبو", "ميتسوري", "أوباناي", "سانيمي", "غيومي", "مويتيرو", "يوريتشي", "موزان", "أكازا", "دوما", "كوكوشيبو"
 ];
 
-// --- بنك الأسئلة والمقولات (كامل وبدون أي حذف) ---
+// --- 🎯 بنك الأسئلة والمقولات بعد التضخيم والزيادة الكبيرة جداً 🎯 ---
 const animeQuizzes = [
     { q: "من هو مبرمج يوكي؟", a: "ليفاي" },
     { q: "ما هو حلم لوفي؟", a: "ملك القراصنة" },
@@ -54,7 +57,7 @@ const animeQuizzes = [
     { q: "من هو ملك اللعنات؟", a: "سوكونا" },
     { q: "من هو أقوى سياف في العالم؟", a: "ميهوك" },
     { q: "ما اسم فاكهة الشيطان الخاصة بـ لاو؟", a: "العمليات" },
-    { q: "من هو مؤسس نينجا كونوها？", a: "هاشيراما" },
+    { q: "من هو مؤسس نينجا كونوها؟", a: "هاشيراما" },
     { q: "ما اسم السلاح الأسطوري الذي يملكه بوزيدون؟", a: "شيراهوشي" },
     { q: "من هو صاحب مقولة: عدم الاستسلام هو سحري؟", a: "أستا" },
     { q: "ما اسم التحول الأخير لـ إيرين؟", a: "العملاق المؤسس" },
@@ -62,7 +65,20 @@ const animeQuizzes = [
     { q: "من هو قائد الفرقة العاشرة في بليتش؟", a: "توشيرو" },
     { q: "ما اسم والد غون؟", a: "جين" },
     { q: "من هو السياف الذي يستخدم 3 سيوف؟", a: "زورو" },
-    { q: "ما اسم المنظمة التي ينتمي إليها إيتاتشي؟", a: "الأكاتسكي" }
+    { q: "ما اسم المنظمة التي ينتمي إليها إيتاتشي؟", a: "الأكاتسكي" },
+    { q: "من هي الشخصية الملقبة بـ غراب كونوها؟", a: "إيتاتشي" },
+    { q: "ما هي رتبة كاكاشي قبل أن يصبح الهوكاجي السادس؟", a: "جونين" },
+    { q: "من هو مستخدم تقنية اللحية البيضاء بعد موته؟", a: "تيتش" },
+    { q: "ما اسم الأكاديمية التي يدرس بها ميدوريا في أنمي بوكو نو هيرو؟", a: "اليو ايه" },
+    { q: "من هي الفتاة التي تمتلك مفاتيح الأرواح السحرية في فيري تيل؟", a: "لوسي" },
+    { q: "من هو الشيطان الذي يسكن داخل سيف أستا؟", a: "ليبي" },
+    { q: "ما اسم السيف الذي يمتلكه تانجيرو بعد هزيمة موزان؟", a: "نيشيرين" },
+    { q: "من هو صاحب مقولة: العالم ليس مثالياً، لكنه موجود من أجلنا؟", a: "إدوارد" },
+    { q: "ما اسم الجزيرة الأخيرة في ون بيس التي تخبئ الكنز؟", a: "لاف تيل" },
+    { q: "من هو الهاشيرا الذي ضحى بحياته في قطار اللانهاية؟", a: "رينغوكو" },
+    { q: "من هو الهوكاجي الخامس لقرية كونوها؟", a: "تسونادي" },
+    { q: "ما اسم عيون ساسكي الأسطورية بعد دمجها مع عيون إيتاتشي؟", a: "الرينغان" },
+    { q: "من هو قائد منظمة الفرسان السحرية الثيران السوداء؟", a: "يامي" }
 ];
 
 async function startBot() {
@@ -84,7 +100,7 @@ async function startBot() {
         }
     });
 
-    // --- نظام الترحيب والوداع التفاعلي الأنثوي اللطيف ---
+    // --- نظام الترحيب والوداع التفاعلي الأنثوي اللطيف المبهج ---
     sock.ev.on('group-participants.update', async (anu) => {
         const from = anu.id; const user = anu.participants[0];
         if (anu.action === 'add') {
@@ -104,7 +120,7 @@ async function startBot() {
         if (!db.groupSettings[from]) db.groupSettings[from] = { closed: false };
         let user = db.users[sender];
 
-        // --- الردود التفاعلية اللطيفة والأنثوية ---
+        // --- الردود التفاعلية اللطيفة والأنثوية المليئة بالحماس والضحك ---
         if (text === ".") return sock.sendMessage(from, { text: `لبيه ولبى قلبك يا قائد ليفاي الأسطوري! 🥰 هههههه يوكي تسمعك كلي آذان صاغية ومتحمسة لأوامرك الفخمة! 🌸✨` });
         if (text.toLowerCase().includes("سلام عليكم") || text.toLowerCase().includes("السلام عليكم")) {
             await sock.sendMessage(from, { text: "وعليكم السلام ورحمة الله وبركاته يا هلاااا ومية هلاااا! 😍 نورت القروب بطلتك العسل، كيف حالك؟ هههههه ✨🌸🎀" });
@@ -121,10 +137,10 @@ async function startBot() {
             if (isCorrect) {
                 delete db.lastAnswer[from];
                 await sock.sendMessage(from, { react: { text: "💗", key: m.key } });
-                await sock.sendMessage(from, { text: `⏳ *ثواااني يا حلوين جاري فحص الإجابة من الأرشيف السحري..* ✨` });
+                await sock.sendMessage(from, { text: `⏳ *ثواااني يا حلوين جاري فحص الإجابة من الأرشيف السحري ليوكي..* ✨` });
                 setTimeout(async () => {
                     user.points += 1000;
-                    await sock.sendMessage(from, { text: `ياااااي كفوووو بطلل! 🎉 *مبروووك يا ${pushName}!* إجابتك صحيحة مية بالمية وتهبّل 😻.\n💰 زدت لك +1000 نقطة ذهبية في رصيدك.\n👤 المسؤول الكيوت: ${entry.host}` });
+                    await sock.sendMessage(from, { text: `ياااااي كفوووو بطلل مذهل! 🎉 *مبروووك يا ${pushName}!* إجابتك صحيحة مية بالمية وتهبّل 😻.\n💰 زدت لك +1000 نقطة ذهبية في رصيدك.\n👤 المسؤول الكيوت: ${entry.host} هههههه` });
                     saveDB();
                 }, 1500);
             } else { await sock.sendMessage(from, { react: { text: "❌", key: m.key } }); }
@@ -142,36 +158,36 @@ async function startBot() {
                              `🎲 *فعاليات وحماس:* (.روليت، .لوخيروك، .كت تويت)\n` +
                              `💰 *الاقتصاد والفلوس:* (.راتب، .متجر، .شراء، .تحويل، .نقاطي)\n` +
                              `📜 *الإدارة والسيطرة:* (.قفل، .فتح، .تاق، .قوانين)\n` +
-                             `📊 *حسابك الإمبراطوري:* (.رتبتي، .بروفايل، .ليفاي)\n\n` +
+                             `📊 *حسابك الإمبراطوري:* (.رتبتي Bourgeois، .بروفايل، .ليفاي)\n\n` +
                              `_أتمنى لك قضاء وقت ممتع ويجنن في عالم يوكي المليء بالبهجة والحماس.. هههههه تسعدني خدمتكم دايماً يا حلوين!_ 💕🎀🌟`;
                 await sock.sendMessage(from, { text: menu }); break;
             case 'خمن':
                 const qItem = animeQuizzes[Math.floor(Math.random() * animeQuizzes.length)];
                 let opts = [qItem.a]; while(opts.length < 4) { let r = bigBank[Math.floor(Math.random() * bigBank.length)]; if(!opts.includes(r)) opts.push(r); }
                 opts.sort(() => Math.random() - 0.5); db.lastAnswer[from] = { answer: qItem.a, options: opts, host: pushName };
-                await sock.sendMessage(from, { text: `🧐 *تحدي ذكاء وسرعة لعيونكم:* ${qItem.q}\n\n1- ${opts[0]}\n2- ${opts[1]}\n3- ${opts[2]}\n4- ${opts[3]}\n\n👤 المسؤول اللطيف: ${pushName} ✨ وروني شطارتكم هههههه` }); break;
+                await sock.sendMessage(from, { text: `🧐 *تحدي ذكاء وسرعة لعيونكم من عالم يوكي:* ${qItem.q}\n\n1- ${opts[0]}\n2- ${opts[1]}\n3- ${opts[2]}\n4- ${opts[3]}\n\n👤 المسؤول اللطيف: ${pushName} ✨ وروني شطارتكم هههههه` }); break;
             case 'تفكيك':
                 const target = bigBank[Math.floor(Math.random() * bigBank.length)]; db.lastAnswer[from] = { answer: target, host: pushName };
-                await sock.sendMessage(from, { text: `🧩 *يلا يا شاطر فكك اسم هالشخصية الكيوت:* [ ${target} ]` }); break;
+                await sock.sendMessage(from, { text: `🧩 *يلا يا شاطر فكك اسم هالشخصية الكيوت في عالم يوكي:* [ ${target} ]` }); break;
             case 'حل':
                 if (!db.lastAnswer[from]) return sock.sendMessage(from, { text: "❌ أويلي.. ما في أي فعاليات شغالة الحين عشان أحلها!" });
                 const correct = db.lastAnswer[from].answer; delete db.lastAnswer[from];
-                await sock.sendMessage(from, { text: `💡 الإجابة الصحيحة والمنقذة هي: *${correct}* \nتم إنهاء الفعالية بنجاح، هاردلك للي ما لحقوا هههههه 🌸` }); break;
+                await sock.sendMessage(from, { text: `💡 الإجابة الصحيحة والمنقذة في أرشيف يوكي هي: *${correct}* \nتم إنهاء الفعالية بنجاح، هاردلك للي ما لحقوا هههههه 🌸` }); break;
             case 'راتب':
                 const now = Date.now(); if (now - user.lastSalary < 86400000) return sock.sendMessage(from, { text: "طماااع! 🤭 استلمت راتبك خلاص.. تعال بكرة وبعطيك من عيوني!" });
-                user.points += 2000; user.lastSalary = now; await sock.sendMessage(from, { text: "💰 وااااو! تم إيداع *2000* نقطة في حسابك لأنك متفاعل وعسل! تتهنى فيهم هههههه ✨💖" }); saveDB(); break;
+                user.points += 2000; user.lastSalary = now; await sock.sendMessage(from, { text: "💰 وااااو! تم إيداع *2000* نقطة في حسابك لأنك متفاعل وعسل في عالم يوكي! تتهنى فيهم هههههه ✨💖" }); saveDB(); break;
             case 'روليت':
                 if (user.points < 500) return sock.sendMessage(from, { text: "❌ يا قلبي أنت تحتاج 500 نقطة على الأقل عشان تلعب!" });
                 const win = Math.random() > 0.4; if (win) { user.points += 500; await sock.sendMessage(from, { text: "🎰 وااااو حظك يجننن! فزت بـ 500 نقطة كاملة! هههههه 🔥🥳" }); }
-                else { user.points -= 500; await sock.sendMessage(from, { text: "🎰 أوووش.. الحظ خانك هالمرة وخسرت 500 نقطة.. تعوضها يا بطل 💀🥺" }); }
+                else { user.points -= 500; await sock.sendMessage(from, { text: "🎰 أوووش.. الحظ خانك هالمرة وخسرت 500 نقطة في عالم يوكي.. تعوضها يا بطل 💀🥺" }); }
                 saveDB(); break;
             case 'رتبتي':
-                await sock.sendMessage(from, { text: `📊 *بـطـاقـة الـعـضـو الإمـبـراطـوريـة الـكـيـوت*\n👤 الاسم: ${pushName}\n💰 نقاطك الحلوة: ${user.points}\n🎖️ رتبتك الفخمة: ${getRole(user.points)} ✨` }); break;
+                await sock.sendMessage(from, { text: `📊 *بـطـاقـة الـعـضـو الإمـبـراطـوريـة الـكـيـوت في عالم يوكي*\n👤 الاسم: ${pushName}\n💰 نقاطك الحلوة: ${user.points}\n🎖️ رتبتك الفخمة: ${getRole(user.points)} ✨` }); break;
             case 'تاق':
                 const meta = await sock.groupMetadata(from); const mems = meta.participants.map(p => p.id);
-                await sock.sendMessage(from, { text: `📣 *نداء ملكي عاجل وحماسي من ${pushName}:*\n\n${args.slice(1).join(' ')}`, mentions: mems }); break;
+                await sock.sendMessage(from, { text: `📣 *نداء ملكي عاجل وحماسي من عالم يوكي بواسطة ${pushName}:*\n\n${args.slice(1).join(' ')}`, mentions: mems }); break;
             case 'قفل': db.groupSettings[from].closed = true; await sock.sendMessage(from, { text: "🔒 تم قفل الحصن بطلب من القادة.. هدوء يا حلوين ششش! 🤫" }); break;
-            case 'فتح': db.groupSettings[from].closed = false; await sock.sendMessage(from, { text: "🔓 يااااي تم فتح البوابات من جديد.. انطلقوا وفجروها تفاعل يا مبدعين! 🥳✨" }); break;
+            case 'فتح': db.groupSettings[from].closed = false; await sock.sendMessage(from, { text: "🔓 يااااي تم فتح البوابات من جديد في عالم يوكي.. انطلقوا وفجروها تفاعل يا مبدعين! 🥳✨" }); break;
             case 'ليفاي': await sock.sendMessage(from, { text: `⚔️ *القائد ليفاي* هو سيدي الأسطوري الغالي وتاج راسي.. هيبته تملى المكان ويوكي تفتخر بخدمته وتنفذ كل كلامه بسعادة! 💖🌸` }); break;
         }
         saveDB();

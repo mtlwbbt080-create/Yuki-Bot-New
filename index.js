@@ -2,36 +2,39 @@ const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = requi
 const pino = require('pino');
 const fs = require('fs-extra');
 const express = require('express'); 
-const qrcodeImg = require('qrcode'); // المكتبة الجديدة الذكية لتحويل الـ QR لصورة متحركة في الموقع
+const qrcodeImg = require('qrcode'); // المكتبة الذكية لتوليد الـ QR كصورة للموقع
 
 // --- 🌐 تشغيل سيرفر الويب الذكي لمنع الـ Timeout وعرض الـ QR ---
 const app = express();
 const port = process.env.PORT || 10000; 
-let currentQR = null; // مخزن الـ QR المؤقت
+let currentQR = null; // مخزن الـ QR المؤقت لمنع التضارب
 
 app.get('/', async (req, res) => {
     if (!currentQR) {
         res.send(`
             <meta charset="UTF-8">
-            <div style="text-align: center; margin-top: 50px; font-family: Arial;">
-                <h2 style="color: #4CAF50;">🌸 عالم يوكي السحري يعمل بنجاح وبدون توقف! ✨</h2>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <div style="text-align: center; margin-top: 50px; font-family: 'Cairo', Arial, sans-serif; background-color: #fcf8fa; padding: 20px;">
+                <h2 style="color: #ff66a3;">🌸 عالم يوكي السحري يعمل بنجاح وبدون توقف! ✨</h2>
                 <p style="color: #555; font-size: 18px;">✅ البوت متصل بالواتساب حالياً وجاهز لجلد الأعداء ونشر المتعة!</p>
+                <p style="color: #888; font-size: 14px;">إذا واجهت مشكلة أو توقف البوت، قم بإعادة تشغيل السيرفر (Restart) من لوحة Render ليتولد رمز جديد.</p>
             </div>
         `);
     } else {
         try {
-            // رسم الـ QR كود وتوليده كصورة Base64 لعرضها فوراً في المتصفح
+            // رسم الـ QR كود وتوليده كصورة Base64 لعرضها فوراً في المتصفح بشكل صحيح
             const qrImage = await qrcodeImg.toDataURL(currentQR);
             res.send(`
                 <meta charset="UTF-8">
-                <div style="text-align: center; margin-top: 30px; font-family: Arial;">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <div style="text-align: center; margin-top: 30px; font-family: 'Cairo', Arial, sans-serif; background-color: #fcf8fa; padding: 20px;">
                     <h2 style="color: #ff66a3;">🌸 امسح الـ QR كود لتشغيل إمبراطورية يوكي 🌸</h2>
-                    <p style="color: #666;">افتح الواتساب من جوالك ➜ الأجهزة المرتبطة ➜ ربط جهاز، ثم وجه الكاميرا للرمز أدناه:</p>
-                    <div style="margin: 20px auto; padding: 15px; border: 3px dashed #ff66a3; display: inline-block; background: #fff; border-radius: 10px;">
-                        <img src="${qrImage}" style="width: 300px; height: 300px;" />
+                    <p style="color: #666; font-size: 16px;">افتح الواتساب من جوالك ➜ الأجهزة المرتبطة ➜ ربط جهاز، ثم وجه الكاميرا للرمز أدناه:</p>
+                    <div style="margin: 20px auto; padding: 15px; border: 3px dashed #ff66a3; display: inline-block; background: #fff; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.05);">
+                        <img src="${qrImage}" style="width: 280px; height: 280px;" />
                     </div>
-                    <p style="color: #888; font-size: 13px;">🔄 تتحدث هذه الصفحة تلقائياً كل 15 ثانية عند تجدد الرمز</p>
-                    <script>setTimeout(() => { location.reload(); }, 15000);</script>
+                    <p style="color: #888; font-size: 13px;">🔄 تتحدث هذه الصفحة تلقائياً كل 10 ثوانٍ لضمان بقاء الرمز نشطاً</p>
+                    <script>setTimeout(() => { location.reload(); }, 10000);</script>
                 </div>
             `);
         } catch (err) {
@@ -75,13 +78,13 @@ const bigBank = [
     "تانجيرو", "نيزوكو", "زينيتسو", "إينوسكي", "رينغوكو", "توميوكا", "شينوبو", "ميتسوري", "أوباناي", "سانيمي", "غيومي", "مويتيرو", "يوريتشي", "موزان", "أكازا", "دوما", "كوكوشيبو"
 ];
 
-// --- 🎯 بنك الأسئلة المطور (تمت زيادة الأسئلة بشكل فخم!) 🎯 ---
+// --- 🎯 بنك الأسئلة المطور 🎯 ---
 const animeQuizzes = [
     { q: "من هو مبرمج يوكي وصاحب الهيبة؟", a: "ليفاي" },
     { q: "ما هو حلم لوفي الأساسي؟", a: "ملك القراصنة" },
     { q: "من هو وميض كونوها الأصفر؟", a: "ميناتو" },
     { q: "من قتل عائلة وعشيرة إيتاتشي؟", a: "إيتاتشي" },
-    { q: "ما اسم سيف ميهوك الأسطوري الأسود؟", a: "يورو" },
+    { q: "ما اسم سيف ميهوك الأسطوري الأسود？", a: "يورو" },
     { q: "من هو ملك اللعنات في جوجوتسو؟", a: "سوكونا" },
     { q: "من هو أقوى سياف في العالم في ون بيس؟", a: "ميهوك" },
     { q: "ما اسم فاكهة الشيطان الخاصة بـ لاو؟", a: "العمليات" },
@@ -92,7 +95,7 @@ const animeQuizzes = [
     { q: "من هو مدرب ناروتو الأول في الأكاديمية؟", a: "ايروكا" },
     { q: "من هو قائد الفرقة العاشرة الكيوت في بليتش؟", a: "توشيرو" },
     { q: "ما اسم والد الصياد غون؟", a: "جين" },
-    { q: "من هو السياف الأسطوري الذي يستخدم 3 سيوف？", a: "زورو" },
+    { q: "من هو السياف الأسطوري الذي يستخدم 3 سيوف؟", a: "زورو" },
     { q: "ما اسم المنظمة السرية التي ينتمي إليها إيتاتشي؟", a: "الأكاتسكي" },
     { q: "من هي الشخصية الملقبة بـ غراب كونوها المظلم؟", a: "إيتاتشي" },
     { q: "ما هي رتبة كاكاشي قبل أن يصبح الهوكاجي السادس؟", a: "جونين" },
@@ -118,7 +121,7 @@ const animeQuizzes = [
     { q: "ما اسم شقيقة تانجيرو الكيوت التي أصبحت شيطانة؟", a: "نيزوكو" },
     { q: "من هو الأدميرال الكسول الذي يمتلك قدرة ونور الضوء؟", a: "كيزارو" },
     { q: "ما اسم ابن جينبي وقائد قراصنة الشمس القديم؟", a: "فيشر تايجر" },
-    { q: "من هو العضو المقنع الأسطوري في الأكاتسكي الذي تبين أنه أوبيتو؟", a: "توبي" },
+    { q: "من هو العضو المقنع الأسطوري في الأكاتسكي الذي تبين أنه أوبيتو？", a: "توبي" },
     { q: "من هو الشينغامي الذي أسقط كشكول الموت لـ لايت؟", a: "ريوك" },
     { q: "من هو أسرع شخصية وقائد الفيلق في هجوم العمالقة؟", a: "ليفاي" },
     { q: "ما هي التقنية التي اخترعها ميناتو واستغرق 3 سنوات لتطويرها؟", a: "الراسينغان" },
@@ -127,7 +130,6 @@ const animeQuizzes = [
     { q: "من هو الصياد الرقم 44 في اختبار الصيادين؟", a: "هيسوكا" },
     { q: "ما هو اسم سيف زورو الذي حصل عليه من هيروري في وانو؟", a: "إنما" },
     { q: "من هو الشينوبي الذي لُقب بـ إله الشينوبي الحقيقي؟", a: "هاشيراما" },
-    // --- 🌟 الأسئلة الحماسية الجديدة والمضافة حديثاً 🌟 ---
     { q: "ما اسم الكيان المظلم الذي يختبئ داخل جسد كوروساكي إيتشيغو؟", a: "هولو" },
     { q: "من هو صانع الجدران الثلاثة في أنمي هجوم العمالقة؟", a: "كارل فريتز" },
     { q: "من هي الشخصية التي تمتلك أسرع أسلوب ركض ونينجا في ناروتو؟", a: "ميناتو" },
@@ -136,8 +138,8 @@ const animeQuizzes = [
     { q: "ما اسم السيف العريض والمخيف الذي كان يملكه زابوزا؟", a: "قاطع الرؤوس" },
     { q: "من هو الهاشيرا الأعمى الأقوى في فيلق قاتلي الشياطين؟", a: "غيومي" },
     { q: "ما هو اسم الفاكهة الأسطورية التي تناولها لوفي وبان حقيقتها (غود نيكا)؟", a: "المطاط" },
-    { q: "من هو ملك النمل المرعب في هันتر x هانتر؟", a: "ميرويم" },
-    { q: "ما اسم الهوكاجي الثاني المخترع لغالبية التقنيات المحرمة؟", a: "توبيراما" }
+    { q: "من هو ملك النمل المرعب في هانتر x هانتر؟", a: "ميرويم" },
+    { q: "ما اسم الهوكاجي الثاني المخترع لغالبية التقنيات المح المحرمة؟", a: "توبيراما" }
 ];
 
 // --- 🏪 قائمة منتجات المتجر الكيوت ليوكي 🏪 ---
@@ -149,15 +151,13 @@ const shopItems = [
 ];
 
 async function startBot() {
-    // تصفية وحذف الكاش القديم والتالف لضمان عدم حدوث Loop في الـ Connection
-    if (fs.existsSync('./session_yuki')) {
-        try { fs.removeSync('./session_yuki'); } catch(e){}
-    }
-
+    // تصفية الجلسة فقط إذا لم تكن موجودة لضمان عدم حذف الاتصال المستقر فجأة
     const { state, saveCreds } = await useMultiFileAuthState('session_yuki');
+    
     const sock = makeWASocket({ 
         auth: state, 
-        logger: pino({ level: 'silent' })
+        logger: pino({ level: 'silent' }),
+        printQRInTerminal: false // الاعتماد على السيرفر كلياً
     });
 
     sock.ev.on('creds.update', saveCreds);
@@ -166,16 +166,19 @@ async function startBot() {
         const { connection, lastDisconnect, qr } = update;
         
         if (qr) {
-            currentQR = qr; // حفظ نص الـ QR ليتم معالجته وعرضه في صفحة الويب
-            console.log('✨ [Yuki] تم توليد رمز QR جديد! افتح رابط موقعك لمسحه الآن.');
+            currentQR = qr; // حفظ الـ QR كود ليقرأه السيرفر فورا
+            console.log('✨ [Yuki] تم توليد رمز QR جديد! تفقد رابط موقعك على ريندر لمسحه.');
         }
 
         if (connection === 'close') {
             currentQR = null;
             const shouldReconnect = (lastDisconnect.error)?.output?.statusCode !== DisconnectReason.loggedOut;
-            if (shouldReconnect) startBot();
+            if (shouldReconnect) {
+                console.log('🔄 تم قطع الاتصال.. جاري إعادة المحاولة الملكية...');
+                startBot();
+            }
         } else if (connection === 'open') {
-            currentQR = null; // تفريغ الرمز بعد اتمام الارتباط والاتصال بالنجاح
+            currentQR = null; // تنظيف الـ QR بعد الاتصال بنجاح
             console.log('✅ تم تشغيل إمبراطورية يوكي بنجاح واكتمل الاتصال بالـ QR كود!');
         }
     });
@@ -236,7 +239,7 @@ async function startBot() {
             case 'اوامر':
                 const menu = `🌸 *مرحباً بك في عالم يوكي السحري المطور* 🌸\n\n` +
                              `🎮 *ألعاب الأنمي والفعاليات:* (.خمن، .سؤال، .تفكيك، .حل، .العاب)\n` +
-                             `🎲 *تسلية وحب وحماس:* (.روليت، .لوخيروك Reds، .كت تويت Club، .نسبة_الحب)\n` +
+                             `🎲 *تسلية وحب وحماس:* (.روليت، .لوخيروك، .كت تويت، .نسبة_الحب)\n` +
                              `💰 *الاقتصاد والفلوس:* (.راتب، .متجر، .شراء، .تحويل، .نقاطي)\n` +
                              `📜 *الإدارة والسيطرة:* (.قفل، .فتح، .تاق، .قوانين)\n` +
                              `📊 *حسابك الإمبراطوري:* (.رتبتي، .بروفايل، .ليفاي)\n\n` +

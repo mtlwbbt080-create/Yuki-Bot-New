@@ -2,10 +2,11 @@ const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = requi
 const pino = require('pino');
 const fs = require('fs-extra');
 const express = require('express'); 
+const qrcode = require('qrcode-terminal'); // المكتبة المنقذة لطباعة الـ QR
 
 // --- 🌐 تشغيل سيرفر الويب المُنقذ لـ Render لمنع الـ Timeout ---
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 10000; // ضبط المنفذ الافتراضي لـ Render
 
 app.get('/', (req, res) => {
     res.send('🌸 عالم يوكي السحري يعمل بنجاح وبدون توقف! ✨');
@@ -46,7 +47,7 @@ const bigBank = [
     "تانجيرو", "نيزوكو", "زينيتسو", "إينوسكي", "رينغوكو", "توميوكا", "شينوبو", "ميتسوري", "أوباناي", "سانيمي", "غيومي", "مويتيرو", "يوريتشي", "موزان", "أكازا", "دوما", "كوكوشيبو"
 ];
 
-// --- 🎯 بنك الأسئلة ومقولات الأنمي الضخم 🎯 ---
+// --- 🎯 بنك الأسئلة ومقولات الأنمي المطور 🎯 ---
 const animeQuizzes = [
     { q: "من هو مبرمج يوكي وصاحب الهيبة؟", a: "ليفاي" },
     { q: "ما هو حلم لوفي الأساسي؟", a: "ملك القراصنة" },
@@ -61,7 +62,7 @@ const animeQuizzes = [
     { q: "من هو صاحب مقولة: عدم الاستسلام هو سحري؟", a: "أستا" },
     { q: "ما اسم التحول الأخير والمخيف لـ إيرين؟", a: "العملاق المؤسس" },
     { q: "من هو مدرب ناروتو الأول في الأكاديمية؟", a: "ايروكا" },
-    { q: "من هو قائد الفرقة العاشرة الكيوت في بليتش؟", a: "توشيرو" },
+    { q: "من هو قائد الفرقة العاشرة الكيوت في بليتش？", a: "توشيرو" },
     { q: "ما اسم والد الصياد غون؟", a: "جين" },
     { q: "من هو السياف الأسطوري الذي يستخدم 3 سيوف؟", a: "زورو" },
     { q: "ما اسم المنظمة السرية التي ينتمي إليها إيتاتشي؟", a: "الأكاتسكي" },
@@ -73,7 +74,7 @@ const animeQuizzes = [
     { q: "من هو الشيطان الكيوت الذي يسكن داخل سيف أستا؟", a: "ليبي" },
     { q: "ما اسم السيف الذي يمتلكه تانجيرو الأسود؟", a: "نيشيرين" },
     { q: "من صاحب مقولة: العالم ليس مثالياً، لكنه موجود من أجلنا؟", a: "إدوارد" },
-    { q: "ما اسم الجزيرة الأخيرة في ون بيس التي تخبئ الون بيس? ", a: "لاف تيل" },
+    { q: "ما اسم الجزيرة الأخيرة في ون بيس التي تخبئ الون بيس؟", a: "لاف تيل" },
     { q: "من هو الهاشيرا اللهب الذي ضحى بحياته في القطار؟", a: "رينغوكو" },
     { q: "من هو الهوكاجي الخامس والطبية الأسطورية لقرية كونوها؟", a: "تسونادي" },
     { q: "ما اسم عيون ساسكي الأسطورية الأبدية؟", a: "الرينغان" },
@@ -91,7 +92,15 @@ const animeQuizzes = [
     { q: "ما اسم ابن جينبي وقائد قراصنة الشمس القديم؟", a: "فيشر تايجر" },
     { q: "من هو العضو المقنع الأسطوري في الأكاتسكي الذي تبين أنه أوبيتو؟", a: "توبي" },
     { q: "من هو الشينغامي الذي أسقط كشكول الموت لـ لايت؟", a: "ريوك" },
-    { q: "من هو أسرع شخصية وقائد الفيلق في هجوم العمالقة؟", a: "ليفاي" }
+    { q: "من هو أسرع شخصية وقائد الفيلق في هجوم العمالقة؟", a: "ليفاي" },
+    // --- الأسئلة الإضافية المضافة حديثاً ---
+    { q: "ما هي التقنية التي اخترعها ميناتو واستغرق 3 سنوات لتطويرها؟", a: "الراسينغان" },
+    { q: "من هي القطة التي ترافق يورويتشي في بليتش؟", a: "يورويتشي" },
+    { q: "ما اسم السفينة الأولى لطاقم قراصنة قبعة القش؟", a: "غوينغ ميري" },
+    { q: "من هو الصياد الرقم 44 في اختبار الصيادين؟", a: "هيسوكا" },
+    { q: "ما هو اسم سيف زورو الذي حصل عليه من هيروري في وانو؟", a: "إنما" },
+    { q: "ما اسم اللعنة التي يمتلكها فيشينغامي طاقم كايدو؟", a: "الـمـقـصلة" },
+    { q: "من هو الشينوبي الذي لُقب بـ إله الشينوبي الحقيقي؟", a: "هاشيراما" }
 ];
 
 // --- 🏪 قائمة منتجات المتجر الكيوت ليوكي 🏪 ---
@@ -103,47 +112,37 @@ const shopItems = [
 ];
 
 async function startBot() {
-    // حذف الكاش القديم لضمان تفعيل كود الربط الجديد
+    // إزالة الجلسة المعطلة لبناء كود QR نظيف بدون تكرار
     if (fs.existsSync('./session_yuki')) {
-        fs.removeSync('./session_yuki');
+        try { fs.removeSync('./session_yuki'); } catch(e){}
     }
 
     const { state, saveCreds } = await useMultiFileAuthState('session_yuki');
     const sock = makeWASocket({ 
         auth: state, 
         logger: pino({ level: 'silent' }),
-        printQRInTerminal: false // إلغاء طباعة الـ QR لتنظيف الـ Logs
+        printQRInTerminal: false // يتم معالجتها يدوياً لمنع تداخل الشاشة
     });
-    
-    saveCreds();
-
-    // 🌟 تفعيل الربط بالكود بدلاً من الـ QR 🌟
-    // ضع رقم البوت هنا (مع كود الدولة وبدون أصفار أو +)
-    let phoneNumber = "249992574007"; 
-
-    if (phoneNumber && !sock.authState.creds.registered) {
-        setTimeout(async () => {
-            try {
-                let code = await sock.requestPairingCode(phoneNumber);
-                code = code?.match(/.{1,4}/g)?.join("-") || code;
-                console.log('\n==================================================');
-                console.log(`🌸 كود ربط يوكي بالواتساب الخاص بك هو ➜  ${code}  🌸`);
-                console.log('==================================================\n');
-            } catch (err) {
-                console.log("❌ فشل توليد كود الربط: ", err);
-            }
-        }, 3000);
-    }
 
     sock.ev.on('creds.update', saveCreds);
 
     sock.ev.on('connection.update', (update) => {
-        const { connection, lastDisconnect } = update;
+        const { connection, lastDisconnect, qr } = update;
+        
+        // حل مشكلة الـ QR وطباعته بشكل ملموم ومصغر وثابت
+        if (qr) {
+            console.log('\n==================================================');
+            console.log('🌸 امسح الـ QR كود التالي لتشغيل يوكي بالواتساب 🌸');
+            console.log('==================================================\n');
+            qrcode.generate(qr, { small: true }); // الحجم الصغير يمنع تلف الكود في الـ Logs
+            console.log('\n==================================================\n');
+        }
+
         if (connection === 'close') {
             const shouldReconnect = (lastDisconnect.error)?.output?.statusCode !== DisconnectReason.loggedOut;
             if (shouldReconnect) startBot();
         } else if (connection === 'open') {
-            console.log('✅ تم تشغيل إمبراطورية يوكي بنجاح واكتمل الاتصال!');
+            console.log('✅ تم تشغيل إمبراطورية يوكي بنجاح واكتمل الاتصال بالـ QR الأسطوري!');
         }
     });
 
@@ -173,12 +172,9 @@ async function startBot() {
 
         if (db.lastAnswer[from] && !text.startsWith('.')) {
             const entry = db.lastAnswer[from]; let isCorrect = false;
-            
             if (entry.options) {
                 const optIdx = parseInt(text) - 1;
-                if (entry.options[optIdx] === entry.answer || text === entry.answer) {
-                    isCorrect = true;
-                }
+                if (entry.options[optIdx] === entry.answer || text === entry.answer) isCorrect = true;
             } else if (text === entry.answer) { 
                 isCorrect = true; 
             }
@@ -204,10 +200,10 @@ async function startBot() {
 
         switch (cmd) {
             case 'اوامر':
-                const menu = `🌸 *مرحباً بك في عالم يوكي السحري* 🌸\n\n` +
-                             `🎮 *ألعاب الأنمي الممتعة:* (.خمن، .سؤال، .تفكيك، .حل)\n` +
-                             `🎲 *فعاليات وحماس:* (.روليت، .لوخيروك، .كت تويت)\n` +
-                             `💰 *الاقتصاد والفلوس:* (.راتب، .متجر، .شراء، .تحويل، .نقاطي)\n` +
+                const menu = `🌸 *مرحباً بك في عالم يوكي السحري المطور* 🌸\n\n` +
+                             `🎮 *ألعاب الأنمي والفعاليات:* (.خمن، .سؤال، .تفكيك، .حل، .العاب)\n` +
+                             `🎲 *تسلية وحب وحماس:* (.روليت، .لوخيروك، .كت تويت، .نسبة_الحب)\n` +
+                             `💰 *الاقتصاد والفلوس:* (.راتب Quit، .متجر، .شراء، .تحويل، .نقاطي)\n` +
                              `📜 *الإدارة والسيطرة:* (.قفل، .فتح، .تاق، .قوانين)\n` +
                              `📊 *حسابك الإمبراطوري:* (.رتبتي، .بروفايل، .ليفاي)\n\n` +
                              `_يوكي تسعد بخدمتكم دايماً يا حلوين يا رب تنبسطوا!_ 💕🎀🌟`;
@@ -223,7 +219,6 @@ async function startBot() {
                 }
                 opts.sort(() => Math.random() - 0.5); 
                 db.lastAnswer[from] = { answer: qItem.a, options: opts, host: pushName };
-                
                 await sock.sendMessage(from, { text: `🧐 *تحدي الأوتـاكـو المذهل من عالم يوكي:* \n\n❓ السـؤال: ${qItem.q}\n\n1️⃣ ➜ ${opts[0]}\n2️⃣ ➜ ${opts[1]}\n3️⃣ ➜ ${opts[2]}\n4️⃣ ➜ ${opts[3]}\n\n✨ أرسل رقم الإجابة أو الاسم الصحيح لتربح الفوز! هههههه` }); 
                 break;
                 
@@ -235,6 +230,32 @@ async function startBot() {
                 if (!db.lastAnswer[from]) return sock.sendMessage(from, { text: "❌ أويلي.. ما في أي فعاليات شغالة الحين عشان أحلها!" });
                 const correct = db.lastAnswer[from].answer; delete db.lastAnswer[from];
                 await sock.sendMessage(from, { text: `💡 الإجابة الصحيحة والمنقذة في أرشيف يوكي هي: *${correct}*` }); break;
+
+            case 'العاب':
+                const funEvents = [
+                    "💬 صراحة: وش أكثر شيء تحبه بشخصية القائد ليفاي؟",
+                    "🔥 تحدي: غير اسمك بالجروب إلى 'مساعد يوكي الكيوت' لمدة ساعة!",
+                    "💡 نكتة: محشش شاف إشارة ممنوع الوقوف.. قام انسدح هههههه!",
+                    "⚔️ هيبة: منشن شخص بالجروب وقول له أنا هيبتك الملكية هنا!"
+                ];
+                let event = funEvents[Math.floor(Math.random() * funEvents.length)];
+                await sock.sendMessage(from, { text: `🎯 *فعالية يوكي العشوائية والممتعة:* \n\n${event}` });
+                break;
+
+            case 'نسبة_الحب':
+                let mentions = m.message.extendedTextMessage?.contextInfo?.mentionedJid || [];
+                let p1 = `@${sender.split('@')[0]}`;
+                let p2 = mentions[0] ? `@${mentions[0].split('@')[0]}` : "القائد ليفاي 👑";
+                let lovePercent = Math.floor(Math.random() * 101);
+                let comment = "علاقة باردة جداً.. تحتاجون تتابعون أنمي سوا! ❄️";
+                if(lovePercent > 40) comment = "بداية حب أوتامو جميل ولطيف! 🥰";
+                if(lovePercent > 75) comment = "وااااو! حب أسطوري وعميق يشبه قصة لوفي واللحم! 🍖💖";
+                
+                await sock.sendMessage(from, { 
+                    text: `❤️ *مـقـيـاس الـحـب الـسـحـري لـيـوكـي* ❤️\n\n💘 الـطـرف الأول: ${p1}\n💞 الـطـرف الـثـانـي: ${p2}\n\n📊 نسبة الحب بينكما هي: [ *${lovePercent}%* ] \n📝 الحكم السحري: ${comment}`,
+                    mentions: mentions[0] ? [sender, mentions[0]] : [sender]
+                });
+                break;
                 
             case 'متجر':
                 let shopText = `🏪 *مـتـجـر يـوكـي الـسـحـري لـلأسـلـحـة والأدوات* 🏪\n\n`;
@@ -249,7 +270,6 @@ async function startBot() {
                 let selectedItem = shopItems.find(i => i.id === itemID);
                 if (!selectedItem) return sock.sendMessage(from, { text: "❌ أويلي! أدخل رقم منتج صحيح من المتجر يا عسل!" });
                 if (user.points < selectedItem.price) return sock.sendMessage(from, { text: `❌ رصيدك لا يكفي! تحتاج إلى ${selectedItem.price} نقطة لشراء هذا المنتج الأسطوري!` });
-                
                 user.points -= selectedItem.price;
                 if(!user.inventory) user.inventory = [];
                 user.inventory.push(selectedItem.name);
@@ -285,12 +305,10 @@ async function startBot() {
                 let amount = parseInt(args[2]);
                 if (isNaN(amount) || amount <= 0) return sock.sendMessage(from, { text: "❌ أويلي! أدخل مبلغ صحيح وصالح للتحويل يا عسل!" });
                 if (user.points < amount) return sock.sendMessage(from, { text: "❌ رصيدك الذهبي غير كافي لإتمام هذه العملية الضخمة!" });
-                
                 await sock.sendMessage(from, { text: `💸 *جـاري فـحـص الـخـزنـة الـمـلـكـيـة وتـحـويـل الأمـوال الآن..* ⏳` });
                 setTimeout(async () => {
                     if (!db.users[targetUser]) db.users[targetUser] = { points: 500, inventory: [], lastSalary: 0 };
-                    user.points -= amount;
-                    db.users[targetUser].points += amount;
+                    user.points -= amount; db.users[targetUser].points += amount;
                     await sock.sendMessage(from, { text: `✅ *تمت عملية التحويل السحرية بنجاح بنكهة يوكي!* \n💰 تم تحويل *${amount}* نقطة ذهبية من حسابك إلى المستلم الكيوت بنجاح تام! هههههه تتهنوا ✨🌸` });
                     saveDB();
                 }, 1500); break;

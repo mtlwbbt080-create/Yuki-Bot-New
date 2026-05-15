@@ -1,6 +1,7 @@
 const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const fs = require('fs-extra');
+const qrcode = require('qrcode-terminal'); // استدعاء مكتبة الـ QR البديلة عشان تشتغل في رندر غصب
 
 // --- إعدادات القاعدة ---
 let db = { users: {}, groupSettings: {}, lastAnswer: {} };
@@ -37,7 +38,7 @@ const bigBank = [
 const animeQuizzes = [
     { q: "من هو مبرمج يوكي؟", a: "ليفاي" },
     { q: "ما هو حلم لوفي؟", a: "ملك القراصنة" },
-    { q: "من هو وميض كونوها الأصفر؟", a: "ميناتو" },
+    { q: "من هو وميض كونوها الأصفر？", a: "ميناتو" },
     { q: "من قتل عائلة إيتاتشي؟", a: "إيتاتشي" },
     { q: "ما اسم سيف ميهوك الأسطوري؟", a: "يورو" },
     { q: "من هو ملك اللعنات؟", a: "سوكونا" },
@@ -47,18 +48,39 @@ const animeQuizzes = [
     { q: "ما اسم السلاح الأسطوري الذي يملكه بوزيدون؟", a: "شيراهوشي" },
     { q: "من هو صاحب مقولة: عدم الاستسلام هو سحري؟", a: "أستا" },
     { q: "ما اسم التحول الأخير لـ إيرين؟", a: "العملاق المؤسس" },
-    { q: "من هو مدرب ناروتو الأول؟", a: "ايروکا" },
+    { q: "من هو مدرب ناروتو الأول？", a: "ايروکا" },
     { q: "من هو قائد الفرقة العاشرة في بليتش؟", a: "توشيرو" },
     { q: "ما اسم والد غون؟", a: "جين" },
     { q: "من هو السياف الذي يستخدم 3 سيوف؟", a: "زورو" },
     { q: "ما اسم المنظمة التي ينتمي إليها إيتاتشي؟", a: "الأكاتسكي" }
-    // يمكنك إضافة مئات الأسئلة هنا بنفس التنسيق
 ];
 
 async function startBot() {
     const { state, saveCreds } = await useMultiFileAuthState('session_yuki');
-    const sock = makeWASocket({ auth: state, logger: pino({ level: 'silent' }), printQRInTerminal: true });
+    
+    // تم إلغاء الخيار القديم وإعداد السيرفر ليعمل بصمت وأمان
+    const sock = makeWASocket({ 
+        auth: state, 
+        logger: pino({ level: 'silent' }), 
+        printQRInTerminal: false 
+    });
+    
     sock.ev.on('creds.update', saveCreds);
+
+    // --- توليد وطباعة الـ QR كود البديل في الـ Logs بنجاح ---
+    sock.ev.on('connection.update', (update) => {
+        const { connection, lastDisconnect, qr } = update;
+        if (qr) {
+            console.log('=== 🌸 مسح الـ QR كود الخاص بـ يوكي 🌸 ===');
+            qrcode.generate(qr, { small: true });
+        }
+        if (connection === 'close') {
+            const shouldReconnect = (lastDisconnect.error)?.output?.statusCode !== DisconnectReason.loggedOut;
+            if (shouldReconnect) startBot();
+        } else if (connection === 'open') {
+            console.log('✅ تم تشغيل إمبراطورية يوكي بنجاح واكتمل الاتصال!');
+        }
+    });
 
     // --- نظام الترحيب والوداع التفاعلي ---
     sock.ev.on('group-participants.update', async (anu) => {
@@ -86,15 +108,15 @@ async function startBot() {
         if (text === ".") return sock.sendMessage(from, { text: `لبيه يا قائد ليفاي؟ يوكي تسمعك بكل فخر! 🌸` });
         if (text.toLowerCase().includes("سلام عليكم")) await sock.sendMessage(from, { text: "وعليكم السلام والرحمة! نورت القروب يا بطل ✨🌸" });
 
-        // --- نظام التحقق الذكي من الإجابات (الصح والخطأ) ---
+        // --- نظام التحقق الذكي من الإجابات ---
         if (db.lastAnswer[from] && !text.startsWith('.')) {
             const entry = db.lastAnswer[from];
             let isCorrect = false;
 
-            if (entry.options) { // التحقق من الاختيارات
+            if (entry.options) {
                 const optIdx = parseInt(text) - 1;
                 if (entry.options[optIdx] === entry.answer || text === entry.answer) isCorrect = true;
-            } else if (text === entry.answer) { // التحقق النصي
+            } else if (text === entry.answer) {
                 isCorrect = true;
             }
 
@@ -103,7 +125,7 @@ async function startBot() {
                 await sock.sendMessage(from, { react: { text: "✅", key: m.key } });
                 await sock.sendMessage(from, { text: `⏳ *يوكي تدقق وتطابق البيانات في الأرشيف الإمبراطوري الضخم..*` });
                 setTimeout(async () => {
-                    user.points += 1000; // زدت الجائزة لعيونك
+                    user.points += 1000;
                     await sock.sendMessage(from, { text: `🎉 *أبدعت يا ${pushName}!* إجابة صحيحة ومذهلة.\n💰 +1000 نقطة ذهبية.\n👤 المسؤول: ${entry.host}` });
                     saveDB();
                 }, 1500);
@@ -117,7 +139,6 @@ async function startBot() {
         const args = text.slice(1).trim().split(' ');
         const cmd = args[0].toLowerCase();
 
-        // --- منع الرسائل في حالة القفل ---
         if (db.groupSettings[from].closed && cmd !== 'فتح' && cmd !== 'ليفاي') return;
 
         switch (cmd) {

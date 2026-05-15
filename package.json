@@ -1,16 +1,18 @@
 {
-  "name": "yuki-bot-new",
+  "name": "yuki-bot",
   "version": "1.0.0",
-  "description": "",
+  "description": "عالم يوكي السحري - بوت واتساب متطور للألعاب والفعاليات",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "@whiskeysockets/baileys": "^6.5.0",
-    "express": "^4.18.2",
-    "fs-extra": "^11.1.1",
-    "pino": "^8.14.1",
+    "@whiskeysockets/baileys": "^6.7.0",
+    "express": "^4.19.2",
+    "fs-extra": "^11.2.0",
+    "pino": "^9.1.0",
     "qrcode-terminal": "^0.12.0"
-  }
+  },
+  "author": "Levi",
+  "license": "ISC"
 }

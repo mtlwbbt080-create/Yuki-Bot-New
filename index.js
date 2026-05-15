@@ -63,7 +63,7 @@ const animeQuizzes = [
     { q: "ما اسم التحول الأخير لـ إيرين؟", a: "العملاق المؤسس" },
     { q: "من هو مدرب ناروتو الأول؟", a: "ايروكا" },
     { q: "من هو قائد الفرقة العاشرة في بليتش؟", a: "توشيرو" },
-    { q: "ما اسم والد غون؟", a: "جين" },
+    { q: "ما اسم والد غون？", a: "جين" },
     { q: "من هو السياف الذي يستخدم 3 سيوف؟", a: "زورو" },
     { q: "ما اسم المنظمة التي ينتمي إليها إيتاتشي؟", a: "الأكاتسكي" },
     { q: "من هي الشخصية الملقبة بـ غراب كونوها؟", a: "إيتاتشي" },
@@ -89,8 +89,12 @@ async function startBot() {
     sock.ev.on('connection.update', (update) => {
         const { connection, lastDisconnect, qr } = update;
         if (qr) {
-            console.log('=== 🌸 مسح الـ QR كود الخاص بـ يوكي 🌸 ===');
-            qrcode.generate(qr, { small: true });
+            console.log('\n==================================================');
+            console.log('🌸 امسح الـ QR كود التالي لتفعيل يوكي 🌸');
+            console.log('==================================================\n');
+            // تغيير الإعداد هنا إلى الحجم العادي ليظهر في رندر بوضوح تام
+            qrcode.generate(qr, { small: false }); 
+            console.log('\n==================================================\n');
         }
         if (connection === 'close') {
             const shouldReconnect = (lastDisconnect.error)?.output?.statusCode !== DisconnectReason.loggedOut;

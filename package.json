@@ -2,12 +2,14 @@
   "name": "yuki-bot-new",
   "version": "1.0.0",
   "description": "Yuki Bot 24 Hours",
-  "main": "Name your file",
+  "main": "index.js",
   "scripts": {
-    "start": "node \"Name your file\""
+    "start": "node index.js"
   },
   "dependencies": {
     "@whiskeysockets/baileys": "^6.6.0",
-    "qrcode-terminal": "^0.12.0"
+    "qrcode-terminal": "^0.12.0",
+    "pino": "^9.0.0",
+    "fs-extra": "^11.2.0"
   }
 }

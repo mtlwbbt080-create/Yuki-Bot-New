@@ -1,8 +1,9 @@
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, delay } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const fs = require('fs-extra');
 const express = require('express'); 
 const qrcodeImg = require('qrcode'); // المكتبة الجديدة الذكية لتحويل الـ QR لصورة متحركة في الموقع
+const { Boom } = require('@hapi/boom');
 
 // --- 🌐 تشغيل سيرفر الويب الذكي لمنع الـ Timeout وعرض الـ QR ---
 const app = express();
@@ -81,7 +82,7 @@ const bigBank = [
 const animeQuizzes = [
     { q: "من هو مبرمج يوكي وصاحب الهيبة？", a: "ليفاي" },
     { q: "ما هو حلم لوفي الأساسي؟", a: "ملك القراصنة" },
-    { q: "من هو وميض كونوها الأصفر؟", a: "ميناتو" },
+    { q: "من هو وميض كونوها الأصفر？", a: "ميناتو" },
     { q: "من قتل عائلة وعشيرة إيتاتشي؟", a: "إيتاتشي" },
     { q: "ما اسم سيف ميهوك الأسطوري الأسود؟", a: "يورو" },
     { q: "من هو ملك اللعنات في جوجوتسو؟", a: "سوكونا" },
@@ -114,7 +115,7 @@ const animeQuizzes = [
     { q: "ما هو اسم عّم بوروتو وصديق ومنافس ناروتو؟", a: "ساسكي" },
     { q: "من هو الشخص الأسطوري الذي درب لوفي على الهاكي؟", a: "رالي" },
     { q: "من صاحب مقولة: أنا الرجل الذي سيصبح ملك القراصنة؟", a: "لوفي" },
-    { q: "ما هي القرية المخفية التي ينتمي إليها ناروتو؟", a: "كونوها" },
+    { q: "ما هي القرية المخفية التي ينتمي إليها ناروتو？", a: "كونوها" },
     { q: "من هي مؤسسة الجدار والعملاق الأول في هجوم العمالقة؟", a: "يمير" },
     { q: "من هو مستخدم عيون اللانهاية القاتلة في جوجوتسو؟", a: "قوجو" },
     { q: "ما اسم شقيقة تانجيرو الكيوت التي أصبحت شيطانة؟", a: "نيزوكو" },
@@ -151,11 +152,35 @@ const shopItems = [
 
 async function startBot() {
     const { state, saveCreds } = await useMultiFileAuthState('session_yuki');
+    
+    // 🛡️ إعدادات السوكيت المحدثة كلياً لتخطي قيود الحظر والـ Loop في Render
     const sock = makeWASocket({ 
         auth: state, 
         logger: pino({ level: 'silent' }),
-        printQRInTerminal: false
+        printQRInTerminal: false, // معطل لمنع تداخل اللوجات
+        
+        // تغيير هوية السيرفر لمتصفح سفاري عادي لخداع سيرفرات الميتا ومنع كود 405
+        browser: ['Mac OS', 'Safari', '10.15.7'], 
+        
+        connectTimeoutMs: 60000,
+        defaultQueryTimeoutMs: 0,
+        keepAliveIntervalMs: 30000
     });
+
+    // 🔑 دالة طلب كود الربط النصي التلقائية والمثبتة برقمك الخاص
+    if (!sock.authState.creds.registered) {
+        const myNumber = "249992574007"; // رقمك الموثق والجاهز للربط
+        await delay(6000); // إعطاء السيرفر مهلة 6 ثواني ليستقر قبل طلب الكود
+        try {
+            console.log(`⏳ جاري طلب كود الربط من سيرفرات واتساب للرقم: ${myNumber}...`);
+            const code = await sock.requestPairingCode(myNumber);
+            console.log(`\n=================================================`);
+            console.log(`🌸 كود ربط يوكي بالواتساب الخاص بك هو 👈 [ ${code} ] 🌸`);
+            console.log(`=================================================\n`);
+        } catch (error) {
+            console.error('❌ فشل طلب الكود النصي مؤقتاً، السيرفر سيعيد المحاولة بدقة...', error.message);
+        }
+    }
 
     sock.ev.on('creds.update', saveCreds);
 
@@ -164,33 +189,35 @@ async function startBot() {
         
         if (qr) {
             currentQR = qr; 
-            console.log('✨ [Yuki] تم توليد رمز QR جديد! افتح رابط موقعك لمسحه الآن.');
+            console.log('✨ [Yuki] تم توليد رمز QR احتياطي على الموقع للمسح إن أردت.');
         }
 
         if (connection === 'close') {
             currentQR = null;
-            const statusCode = (lastDisconnect.error)?.output?.statusCode;
+            const statusCode = (lastDisconnect.error instanceof Boom) ? lastDisconnect.error.output.statusCode : null;
             const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
             
-            console.log(`🔄 انقطع الاتصال بكود: ${statusCode}. جاري معالجة الجلسة المعلقة...`);
+            console.log(`🔄 انقطع الاتصال بكود: ${statusCode}. جاري حماية وإعادة بناء الجلسة...`);
 
-            // ⚠️ في حال تكرار تشنج الجلسة، الكود يمسح الكاش القديم تلقائياً لحل الـ Loop فوراً
-            if (statusCode === DisconnectReason.restartRequired || statusCode === 428 || statusCode === 401) {
-                console.log('🧹 [Yuki] مسح ملفات السيرفر التالفة لطلب كود QR جديد ونشط...');
+            // ⚠️ السيطرة الذكية على الأخطاء 428 و 405 و 401 لمنع الـ Loop المستمر
+            if (statusCode === 405 || statusCode === 428 || statusCode === 401 || statusCode === DisconnectReason.restartRequired) {
+                console.log('🧹 [Yuki] تم رصد قيود اتصال، جاري تصفير كاش الجلسة لضمان إنتاج كود جديد سليم...');
                 try {
                     if (fs.existsSync('./session_yuki')) {
-                        fs.emptyDirSync('./session_yuki'); // إفراغ محتويات المجلد آمن برمجياً لمنع الـ Locks
+                        fs.emptyDirSync('./session_yuki'); 
                     }
-                } catch (e) { console.log('خطأ تنظيف الجلسة، جاري التخطي.'); }
-            }
-
-            if (shouldReconnect) {
-                // وضع مهلة 5 ثوانٍ قبل التكرار لتهدئة خوادم واتساب لضمان إخراج الـ QR بقوة
+                } catch (e) { console.log('خطأ أثناء تنظيف الملفات، جاري التخطي.'); }
+                
+                // مهلة أطول (10 ثواني) لتهدئة السيرفر وتخطي الـ IP Block الخاص بـ Render
+                setTimeout(() => startBot(), 10000);
+            } else if (shouldReconnect) {
                 setTimeout(() => startBot(), 5000); 
             }
         } else if (connection === 'open') {
             currentQR = null; 
-            console.log('✅ تم تشغيل إمبراطورية يوكي بنجاح واكتمل الاتصال بالـ QR كود!');
+            console.log('\n============================================');
+            console.log('✅ تم تشغيل إمبراطورية يوكي بنجاح واكتمل الاتصال بالكامل!');
+            console.log('============================================\n');
         }
     });
 
@@ -250,10 +277,10 @@ async function startBot() {
             case 'اوامر':
                 const menu = `🌸 *مرحباً بك في عالم يوكي السحري المطور* 🌸\n\n` +
                              `🎮 *ألعاب الأنمي والفعاليات:* (.خمن، .سؤال، .تفكيك، .حل، .العاب)\n` +
-                             `🎲 *تسلية وحب وحماس:* (.روليت، .لوخيروك، .كت تويت، .نسبة_الحب)\n` +
+                             `🎲 *تسلية وحب وحماس:* (.روليت، .لوخيروك School، .كت تويت، .نسبة_الحب)\n` +
                              `💰 *الاقتصاد والفلوس:* (.راتب، .متجر، .شراء، .تحويل، .نقاطي)\n` +
                              `📜 *الإدارة والسيطرة:* (.قفل، .فتح، .تاق، .قوانين)\n` +
-                             `📊 *حسابك الإمبراطوري:* (.رتبتي Pall، .بروفايل، .ليفاي)\n\n` +
+                             `📊 *حسابك الإمبراطوري:* (.رتبتي، .بروفايل، .ليفاي)\n\n` +
                              `_يوكي تسعد بخدمتكم دايماً يا حلوين يا رب تنبسطوا!_ 💕🎀🌟`;
                 await sock.sendMessage(from, { text: menu }); break;
                 
@@ -377,7 +404,7 @@ async function startBot() {
                 while(c1 === c2) { c2 = choises[Math.floor(Math.random() * choises.length)]; }
                 await sock.sendMessage(from, { text: `🎲 *لو خيروك الكيوت من يوكي:* \n\n🔴 الاختيار الأول: ${c1}\n🔵 الاختيار الثاني: ${c2}\n\nوش تختار? ورونا صدماتكم هههههه` }); break;
             case 'كت تويت':
-                const tweets = ["وش أكثر أنمي تندمت إنك تابعته؟ 🧐", "لو عاد بك الزمن، بتدخل نفس هذا القروب؟ 😂", "من هو أقرب شخص لك في هذا الفيلق؟ 💕", "اعتراف خطير ما قلته لأحد بالجروب قبل كذا؟ 🤫"];
+                const tweets = ["وش أكثر أنمي تندمت إنك تابعته؟ 🧐", "لو عاد بك الزمن، بتدخل نفس هذا القروب？ 😂", "من هو أقرب شخص لك في هذا الفيلق؟ 💕", "اعتراف خطير ما قلته لأحد بالجروب قبل كذا؟ 🤫"];
                 let tweet = tweets[Math.floor(Math.random() * tweets.length)];
                 await sock.sendMessage(from, { text: `💭 *كت تويت حماسي من يوكي:* \n\n💬 ${tweet}` }); break;
             case 'ليفاي': await sock.sendMessage(from, { text: `⚔️ *القائد ليفاي* هو سيدي الأسطوري الغالي وتاج راسي.. هيبته تملى المكان ويوكي تفتخر بخدمته وتنفذ كل كلامه بسعادة! 💖🌸` }); break;

@@ -17,7 +17,8 @@ app.get('/', async (req, res) => {
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <div style="text-align: center; margin-top: 50px; font-family: Arial; background-color: #fcf8fa; padding: 20px;">
                 <h2 style="color: #4CAF50;">🌸 عالم يوكي السحري يعمل بنجاح وبدون توقف! ✨</h2>
-                <p style="color: #555; font-size: 18px;">✅ البوت متصل بالواتساب حالياً أو جاري تحديث الرمز.. انتظر ثواني وحدث الصفحة!</p>
+                <p style="color: #555; font-size: 18px;">✅ البوت متصل بالواتساب حالياً أو جاري إنتاج رمز QR جديد.. انتظر 10 ثوانٍ وحدّث الصفحة أو انتظرها تتحدث تلقائياً!</p>
+                <script>setTimeout(() => { location.reload(); }, 10000);</script>
             </div>
         `);
     } else {
@@ -33,8 +34,8 @@ app.get('/', async (req, res) => {
                     <div style="margin: 20px auto; padding: 15px; border: 3px dashed #ff66a3; display: inline-block; background: #fff; border-radius: 10px;">
                         <img src="${qrImage}" style="width: 300px; height: 300px;" />
                     </div>
-                    <p style="color: #888; font-size: 13px;">🔄 تتحدث هذه الصفحة تلقائياً كل 10 ثوانٍ عند تجدد الرمز</p>
-                    <script>setTimeout(() => { location.reload(); }, 10000);</script>
+                    <p style="color: #888; font-size: 13px;">🔄 تتحدث هذه الصفحة تلقائياً كل 7 ثوانٍ عند تجدد الرمز</p>
+                    <script>setTimeout(() => { location.reload(); }, 7000);</script>
                 </div>
             `);
         } catch (err) {
@@ -84,7 +85,7 @@ const animeQuizzes = [
     { q: "ما هو حلم لوفي الأساسي؟", a: "ملك القراصنة" },
     { q: "من هو وميض كونوها الأصفر？", a: "ميناتو" },
     { q: "من قتل عائلة وعشيرة إيتاتشي؟", a: "إيتاتشي" },
-    { q: "ما اسم سيف ميهوك الأسطوري الأسود؟", a: "يورو" },
+    { q: "ما اسم سيف ميهوك الأسطوري الأسود？", a: "يورو" },
     { q: "من هو ملك اللعنات في جوجوتسو؟", a: "سوكونا" },
     { q: "من هو أقوى سياف في العالم في ون بيس؟", a: "ميهوك" },
     { q: "ما اسم فاكهة الشيطان الخاصة بـ لاو؟", a: "العمليات" },
@@ -138,7 +139,7 @@ const animeQuizzes = [
     { q: "ما اسم السيف العريض والمخيف الذي كان يملكه زابوزا؟", a: "قاطع الرؤوس" },
     { q: "من هو الهاشيرا الأعمى الأقوى في فيلق قاتلي الشياطين？", a: "غيومي" },
     { q: "ما هو اسم الفاكهة الأسطورية التي تناولها لوفي وبان حقيقتها (غود نيكا)؟", a: "المطاط" },
-    { q: "من هو ملك النمل المرعب في هانتر x هانتر؟", a: "ميرويم" },
+    { q: "من هو ملك النمل المرعم في هانتر x هانتر؟", a: "ميرويم" },
     { q: "ما اسم الهوكاجي الثاني المخترع لغالبية التقنيات المحرمة؟", a: "توبيراما" }
 ];
 
@@ -157,7 +158,7 @@ async function startBot() {
     const sock = makeWASocket({ 
         auth: state, 
         logger: pino({ level: 'silent' }),
-        printQRInTerminal: false, // معطل لمنع تداخل اللوجات
+        printQRInTerminal: true, // تفعيلها احتياطياً في اللوج للتحقق الفوري
         
         // تغيير هوية السيرفر لمتصفح سفاري عادي لخداع سيرفرات الميتا ومنع كود 405
         browser: ['Mac OS', 'Safari', '10.15.7'], 
@@ -167,10 +168,10 @@ async function startBot() {
         keepAliveIntervalMs: 30000
     });
 
-    // 🔑 دالة طلب كود الربط النصي التلقائية والمثبتة برقمك الخاص
+    // 🔑 تعديل عبقري: نطلب الكود النصي ولكن نترك ميزة الـ QR تعمل في نفس الوقت للموقع!
     if (!sock.authState.creds.registered) {
         const myNumber = "249992574007"; // رقمك الموثق والجاهز للربط
-        await delay(6000); // إعطاء السيرفر مهلة 6 ثواني ليستقر قبل طلب الكود
+        await delay(3000); // إعطاء السيرفر مهلة ليستقر
         try {
             console.log(`⏳ جاري طلب كود الربط من سيرفرات واتساب للرقم: ${myNumber}...`);
             const code = await sock.requestPairingCode(myNumber);
@@ -178,7 +179,7 @@ async function startBot() {
             console.log(`🌸 كود ربط يوكي بالواتساب الخاص بك هو 👈 [ ${code} ] 🌸`);
             console.log(`=================================================\n`);
         } catch (error) {
-            console.error('❌ فشل طلب الكود النصي مؤقتاً، السيرفر سيعيد المحاولة بدقة...', error.message);
+            console.error('⚠️ تعذر طلب الكود النصي حالياً (بسبب كود 405)، السيرفر يعتمد الآن على الـ QR في الموقع الأساسي...');
         }
     }
 
@@ -187,9 +188,10 @@ async function startBot() {
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
         
+        // تعديل جوهري: إجبار التقاط الـ QR وتخزينه ليعرض في الموقع غصب عن السيرفر
         if (qr) {
             currentQR = qr; 
-            console.log('✨ [Yuki] تم توليد رمز QR احتياطي على الموقع للمسح إن أردت.');
+            console.log('✨ [Yuki] 🟢 تم توليد رمز QR بنجاح! افتح رابط الموقع فوراً لكسحه!');
         }
 
         if (connection === 'close') {

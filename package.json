@@ -1,0 +1,13 @@
+{
+  "name": "yuki-bot-new",
+  "version": "1.0.0",
+  "description": "Yuki Bot 24 Hours",
+  "main": "Name your file",
+  "scripts": {
+    "start": "node \"Name your file\""
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.6.0",
+    "qrcode-terminal": "^0.12.0"
+  }
+}

@@ -1,8 +1,9 @@
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, delay } = require('@whiskeysockets/baileys');
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, delay, Browsers } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const fs = require('fs-extra');
 const express = require('express'); 
 const qrcodeImg = require('qrcode'); // المكتبة الجديدة الذكية لتحويل الـ QR لصورة متحركة في الموقع
+const qrcodeTerminal = require('qrcode-terminal'); // الحزمة المنقذة لرسم الرمز بوضوح داخل الترمكس
 const { Boom } = require('@hapi/boom');
 
 // --- 🌐 تشغيل سيرفر الويب الذكي لمنع الـ Timeout وعرض الـ QR ---
@@ -87,10 +88,10 @@ const animeQuizzes = [
     { q: "من قتل عائلة وعشيرة إيتاتشي؟", a: "إيتاتشي" },
     { q: "ما اسم سيف ميهوك الأسطوري الأسود？", a: "يورو" },
     { q: "من هو ملك اللعنات في جوجوتسو؟", a: "سوكونا" },
-    { q: "من هو أقوى سياف في العالم في ون بيس؟", a: "ميهوك" },
+    { q: "من هو أقوى سياف في العالم في ون بيس？", a: "ميهوك" },
     { q: "ما اسم فاكهة الشيطان الخاصة بـ لاو؟", a: "العمليات" },
     { q: "من هو مؤسس نينجا قرية كونوها الأول؟", a: "هاشيراما" },
-    { q: "ما اسم السلاح الأسطوري (الدرجة الأولى) الذي يملكه بوزيدون؟", a: "شيراهوشي" },
+    { q: "ما اسم السلاح الأسطوري (الدرجة الأولى) الذي يملكه بوزيدون？", a: "شيراهوشي" },
     { q: "من هو صاحب مقولة: عدم الاستسلام هو سحري؟", a: "أستا" },
     { q: "ما اسم التحول الأخير والمخيف لـ إيرين؟", a: "العملاق المؤسس" },
     { q: "من هو مدرب ناروتو الأول في الأكاديمية؟", a: "ايروكا" },
@@ -102,7 +103,7 @@ const animeQuizzes = [
     { q: "ما هي رتبة كاكاشي قبل أن يصبح الهوكاجي السادس؟", a: "جونين" },
     { q: "من هو مستخدم تقنية وزلزال اللحية البيضاء بعد موته؟", a: "تيتش" },
     { q: "ما اسم الأكاديمية الأبطال التي يدرس بها ميدوريا？", a: "اليو ايه" },
-    { q: "من هي الفتاة التي تمتلك مفاتيح الأرواح السحرية؟", a: "لوسي" },
+    { q: "من هي الفتاة التي تمتلك مفاتيح الأرواح السحرية？", a: "لوسي" },
     { q: "من هو الشيطان الكيوت الذي يسكن داخل سيف أستا؟", a: "ليبي" },
     { q: "ما اسم السيف الذي يمتلكه تانجيرو الأسود؟", a: "نيشيرين" },
     { q: "من صاحب مقولة: العالم ليس مثالياً، لكنه موجود من أجلنا؟", a: "إدوارد" },
@@ -113,7 +114,7 @@ const animeQuizzes = [
     { q: "من هو قائد منظمة الفرسان السحرية الثيران السوداء؟", a: "يامي" },
     { q: "من هو ابن أو ولد ناروتو الأسطوري الجديد؟", a: "بوروتو" },
     { q: "من هو والد ناروتو الحقيقي؟", a: "ميناتو" },
-    { q: "ما هو اسم عّم بوروتو وصديق ومنافس ناروتو؟", a: "ساسكي" },
+    { q: "ما اسم عّم بوروتو وصديق ومنافس ناروتو؟", a: "ساسكي" },
     { q: "من هو الشخص الأسطوري الذي درب لوفي على الهاكي؟", a: "رالي" },
     { q: "من صاحب مقولة: أنا الرجل الذي سيصبح ملك القراصنة؟", a: "لوفي" },
     { q: "ما هي القرية المخفية التي ينتمي إليها ناروتو？", a: "كونوها" },
@@ -121,7 +122,7 @@ const animeQuizzes = [
     { q: "من هو مستخدم عيون اللانهاية القاتلة في جوجوتسو؟", a: "قوجو" },
     { q: "ما اسم شقيقة تانجيرو الكيوت التي أصبحت شيطانة؟", a: "نيزوكو" },
     { q: "من هو الأدميرال الكسول الذي يمتلك قدرة ونور الضوء؟", a: "كيزارو" },
-    { q: "ما اسم ابن جينبي وقائد قراصنة الشمس القديم؟", a: "فيشر تايجر" },
+    { q: "ما اسم ابن جينبي وقائد قراصنة الشمس القديم？", a: "فيشر تايجر" },
     { q: "من هو العضو المقنع الأسطوري في الأكاتسكي الذي تبين أنه أوبيتو؟", a: "توبي" },
     { q: "من هو الشينغامي الذي أسقط كشكول الموت لـ لايت؟", a: "ريوك" },
     { q: "من هو أسرع شخصية وقائد الفيلق في هجوم العمالقة؟", a: "ليفاي" },
@@ -132,7 +133,7 @@ const animeQuizzes = [
     { q: "ما هو اسم سيف زورو الذي حصل عليه من هيروري في وانو؟", a: "إنما" },
     { q: "من هو الشينوبي الذي لُقب بـ إله الشينوبي الحقيقي؟", a: "هاشيراما" },
     { q: "ما اسم الكيان المظلم الذي يختبئ داخل جسد كوروساكي إيتشيغو؟", a: "هولو" },
-    { q: "من هو صانع الجدران الثلاثة في أنمي هجوم العمالقة؟", a: "كارل فريتز" },
+    { q: "من هو صانع الجدران الثلاثة في أنمي هجوم العمالقة？", a: "كارل فريتز" },
     { q: "من هي الشخصية التي تمتلك أسرع أسلوب ركض ونينجا في ناروتو؟", a: "ميناتو" },
     { q: "ما اسم النقابة السحرية الأقوى التي ينتمي إليها ناتسو دراغنيل؟", a: "فيرى تيل" },
     { q: "من هو الأوتـاكـو العبقري مخترع آلة الزمن والملقب بـ هوبولين كيوما؟", a: "أوكابي" },
@@ -154,66 +155,43 @@ const shopItems = [
 async function startBot() {
     const { state, saveCreds } = await useMultiFileAuthState('session_yuki');
     
-    // 🛡️ إعدادات السوكيت المحدثة كلياً لتخطي قيود الحظر والـ Loop في Render
     const sock = makeWASocket({ 
         auth: state, 
         logger: pino({ level: 'silent' }),
-        printQRInTerminal: true, // تفعيلها احتياطياً في اللوج للتحقق الفوري
-        
-        // تغيير هوية السيرفر لمتصفح سفاري عادي لخداع سيرفرات الميتا ومنع كود 405
-        browser: ['Mac OS', 'Safari', '10.15.7'], 
-        
+        printQRInTerminal: false, 
+        // 🛠️ تعديل أمني وجوهري هنا لمحاكاة متصفح حقيقي متوافق 100% مع التحديثات الأخيرة لمنع الـ QR Loop
+        browser: Browsers.macOS('Desktop'), 
         connectTimeoutMs: 60000,
         defaultQueryTimeoutMs: 0,
-        keepAliveIntervalMs: 30000
+        keepAliveIntervalMs: 30000,
+        emitOwnEvents: true
     });
-
-    // 🔑 تعديل عبقري: نطلب الكود النصي ولكن نترك ميزة الـ QR تعمل في نفس الوقت للموقع!
-    if (!sock.authState.creds.registered) {
-        const myNumber = "249992574007"; // رقمك الموثق والجاهز للربط
-        await delay(3000); // إعطاء السيرفر مهلة ليستقر
-        try {
-            console.log(`⏳ جاري طلب كود الربط من سيرفرات واتساب للرقم: ${myNumber}...`);
-            const code = await sock.requestPairingCode(myNumber);
-            console.log(`\n=================================================`);
-            console.log(`🌸 كود ربط يوكي بالواتساب الخاص بك هو 👈 [ ${code} ] 🌸`);
-            console.log(`=================================================\n`);
-        } catch (error) {
-            console.error('⚠️ تعذر طلب الكود النصي حالياً (بسبب كود 405)، السيرفر يعتمد الآن على الـ QR في الموقع الأساسي...');
-        }
-    }
 
     sock.ev.on('creds.update', saveCreds);
 
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
         
-        // تعديل جوهري: إجبار التقاط الـ QR وتخزينه ليعرض في الموقع غصب عن السيرفر
         if (qr) {
             currentQR = qr; 
-            console.log('✨ [Yuki] 🟢 تم توليد رمز QR بنجاح! افتح رابط الموقع فوراً لكسحه!');
+            console.log('\n✨ [Yuki] 🟢 تم توليد الرمز بنجاح! امسحه الآن من الشاشة أدناه:');
+            qrcodeTerminal.generate(qr, { small: true }); 
         }
 
         if (connection === 'close') {
             currentQR = null;
             const statusCode = (lastDisconnect.error instanceof Boom) ? lastDisconnect.error.output.statusCode : null;
-            const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
             
             console.log(`🔄 انقطع الاتصال بكود: ${statusCode}. جاري حماية وإعادة بناء الجلسة...`);
 
-            // ⚠️ السيطرة الذكية على الأخطاء 428 و 405 و 401 لمنع الـ Loop المستمر
-            if (statusCode === 405 || statusCode === 428 || statusCode === 401 || statusCode === DisconnectReason.restartRequired) {
-                console.log('🧹 [Yuki] تم رصد قيود اتصال، جاري تصفير كاش الجلسة لضمان إنتاج كود جديد سليم...');
-                try {
-                    if (fs.existsSync('./session_yuki')) {
-                        fs.emptyDirSync('./session_yuki'); 
-                    }
-                } catch (e) { console.log('خطأ أثناء تنظيف الملفات، جاري التخطي.'); }
-                
-                // مهلة أطول (10 ثواني) لتهدئة السيرفر وتخطي الـ IP Block الخاص بـ Render
-                setTimeout(() => startBot(), 10000);
-            } else if (shouldReconnect) {
-                setTimeout(() => startBot(), 5000); 
+            // 🛠️ إصلاح شروط الـ 401 والـ 428 لكي لا تقوم بالتصفير اللانهائي ومسح الجلسة بشكل متكرر
+            if (statusCode === DisconnectReason.loggedOut) {
+                console.log('❌ تم تسجيل الخروج من الهاتف، يجب مسح مجلد الجلسة يدوياً وإنشاء رمز جديد.');
+                try { fs.removeSync('./session_yuki'); } catch(e){}
+                setTimeout(() => startBot(), 5000);
+            } else {
+                // أي كود انقطاع آخر يتم معالجته كإعادة اتصال طبيعية بدون تصفير كاش عشوائي يسبب تعليق السيرفر
+                setTimeout(() => startBot(), 5000);
             }
         } else if (connection === 'open') {
             currentQR = null; 
@@ -323,7 +301,7 @@ async function startBot() {
                 let p1 = `@${sender.split('@')[0]}`;
                 let p2 = mentions[0] ? `@${mentions[0].split('@')[0]}` : "القائد ليفاي 👑";
                 let lovePercent = Math.floor(Math.random() * 101);
-                let comment = "علاقة باردة جداً.. تحتاجون تتابعون أنمي سوا! ❄️";
+                let comment = "عlaقة باردة جداً.. تحتاجون تتابعون أنمي سوا! ❄️";
                 if(lovePercent > 40) comment = "بداية حب أوتامو جميل ولطيف! 🥰";
                 if(lovePercent > 75) comment = "وااااو! حب أسطوري وعميق يشبه قصة لوفي واللحم! 🍖💖";
                 
@@ -357,7 +335,7 @@ async function startBot() {
 
             case 'راتب':
                 const now = Date.now(); if (now - user.lastSalary < 86400000) return sock.sendMessage(from, { text: "طماااع! 🤭 استلمت راتبك خلاص.. تعال بكرة وبعطيك من عيوني!" });
-                user.points += 2000; user.lastSalary = now; await sock.sendMessage(from, { text: "💰 وااااو! تم إيداع *2000* نقطة في حسابك لأنك متفاعل وعسل في عالم يوكي! تتهنى فيهم هههههه ✨💖" }); saveDB(); break;
+                user.points += 2000; user.lastSalary = now; await sock.sendMessage(from, { text: "💰 وااااو! تم إيداع *2000* نقطة في حسابك لأنك متفاعل وعسل in عالم يوكي! تتهنى فيهم هههههه ✨💖" }); saveDB(); break;
                 
             case 'روليت':
                 if (user.points < 500) return sock.sendMessage(from, { text: "❌ يا قلبي أنت تحتاج 500 نقطة على الأقل عشان تلعب!" });
